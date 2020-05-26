@@ -38,7 +38,7 @@ const initDataFromCsv = ({ csv, fields, rootName }) => {
     return d3.sum(leaves, d => d.Total)
   })
   dataNested = nest.entries(csv)
-  root = d3.hierarchy({ key: rootName ?? 'ROOT', values: dataNested }, d => d.values)
+  root = d3.hierarchy({ key: rootName, values: dataNested }, d => d.values)
     .sum(d => d.value)
 }
 
@@ -83,8 +83,6 @@ const initView = ({ container, breadcrumbsCallback }) => {
   // todo: count unique keys/names
   const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, root.children.length + 1))
   // const color = d3.scaleOrdinal().range(d3.schemeDark2)
-
-  // Label ??
 
   // Container
   const svg = d3.select(container)
