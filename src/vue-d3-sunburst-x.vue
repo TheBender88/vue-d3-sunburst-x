@@ -5,10 +5,6 @@
         <li v-for="(v, k) in breadcrumbs" :key="k"><a>{{ v }}</a></li>
       </ul>
     </div>
-    <div>
-      <pre>{{ filterOptions }}</pre>
-      <input type="checkbox"/>ABC
-    </div>
     <div class="inner">
       <div class="help" @click="toggleHelp ^= 1">
         <div>
@@ -34,17 +30,17 @@
           </ul>
         </div>
       </div>
-      <div v-show="toggleNoData" class="nodata">NO DATA LOADED</div>
+      <div v-show="flagNoData" class="nodata">NO DATA LOADED</div>
       <svg ref="svg" class="d3svg"/>
       <div class="field-list">
         <div>GROUP ORDER</div>
         <div is="transition-group">
           <template v-for="(f, i) in fields">
-            <div class="filter-wrapper" :key="`0/${f.name}`">
+            <div class="field-wrapper" :key="`0/${f.name}`">
               <div
                 :key="`1/${f.name}`"
                 @click="groupOrderToggle(i)"
-                :class="'filter-parent' + (f.selected ? '' : ' inactive')"
+                :class="'field-name' + (f.selected ? '' : ' inactive')"
                 draggable="true"
                 @dragstart="dragStart(i, $event)"
                 @dragover="dragOver(i, $event)"
@@ -53,9 +49,18 @@
                 {{ f.name }}
               </div>
               <div :key="`2/${f.name}`" class="filter-options">
-                <template v-for="(opt, i) in filterOptions[f.name]">
-                  <div :key="i">
-                    <input type="checkbox" :key="i">{{ opt }}
+                <template v-for="(val, opt) in filters[f.name]">
+                  <div :key="opt">
+                    <span @click="filters[f.name][opt] ^= 1">
+                      <input
+                        v-model="filters[f.name][opt]"
+                        type="checkbox"
+                        :true-value="1"
+                        :false-value="0"
+                        :key="i"
+                      >
+                      {{ opt }}
+                    </span>
                   </div>
                 </template>
               </div>
@@ -90,66 +95,94 @@ export default {
   },
   data () {
     return {
-      toggleNoData: 1,
+      flagNoData: 1,
       toggleHelp: 0,
       fields: [], // { name: 'Delta', selected: 1 },
       breadcrumbs: [],
-      filterOptions: {},
+      filters: {},
+      flagFiltersSet: 0,
     }
   },
   computed: {
-    updateTrigger () {
-      return {
-        columns: this.columns,
-        rows: this.rows,
-      }
+    filteredRows () {
+      let rows = this.rows
+      Object.entries(this.filters).forEach(([field, options]) => {
+        if (field === 'Total') return
+        rows = rows.filter(r => options[r[field]])
+      })
+      return rows
     },
     selectedFields () {
       return this.fields.filter(e => e.selected === 1).map(e => e.name)
     },
   },
   watch: {
-    'updateTrigger': {
+    '$props': {
       deep: true,
-      handler: function (newVal, oldVal) {
-        if (oldVal.columns !== newVal.columns) {
-          this.initFields()
+      handler: function () {
+        this.initFields()
+        this.initData()
+      }
+    },
+    'filters': {
+      deep: true,
+      handler: function () {
+        if (!this.flagFiltersSet) {
+          this.flagFiltersSet = 1
+          return
         }
-        this.dataChanged()
+        this.initData()
       }
     },
   },
   mounted () {
+    // temp (testing for autoreload)
     this.initFields()
-    this.dataChanged()
+    this.initData()
   },
   methods: {
     initFields () {
+      // console.log('initFields')
       const f = this.columns.slice(0, -1).map(e => {
         return { name: e, selected: 1 }
       })
       this.$set(this, 'fields', f)
+      this.initFilters()
     },
-    dataChanged () {
-      if (this.selectedFields.length === 0 || this.rows.length === 0) {
-        this.toggleNoData = 1
-        return
-      }
-      this.toggleNoData = 0
-      const f = d.generateFilterOptions({
+    initFilters () {
+      // console.log('initFilters')
+      const filters = d.generateFilterOptions({
         columns: this.columns,
         rows: this.rows,
       })
-      this.$set(this, 'filterOptions', f)
+      this.flagFiltersSet = 0
+      this.$set(this, 'filters', filters)
+    },
+    initData () {
+      // console.log('initData')
+      if (this.filteredRows.length === 0) {
+        this.flagNoData = 1
+        this.$refs['svg'].innerHTML = ''
+        return
+      }
+      this.flagNoData = 0
       v.initData({
         rootName: this.rootName,
         fields: this.selectedFields,
-        rows: this.rows,
+        // rows: this.rows,
+        rows: this.filteredRows,
       })
+      this.initView()
+    },
+    initView () {
+      // console.log('initView')
       v.initView({
         container: this.$refs['svg'],
         breadcrumbsCallback: this.breadcrumbsUpdate,
       })
+    },
+    filterToggleSet () {
+      console.log('...')
     },
     dragStart (i, e) {
       e.dataTransfer.effectAllowed = 'move'
@@ -173,12 +206,12 @@ export default {
       const e = f.splice(i, 1)[0]
       f.splice(j, 0, e)
       this.$set(this, 'fields', f)
-      this.dataChanged()
+      this.initData()
     },
     groupOrderToggle (i) {
       if (this.selectedFields.length === 1 && this.fields[i].selected === 1) return // Need at least one active
       this.fields[i].selected ^= 1
-      this.dataChanged()
+      this.initData()
     },
     breadcrumbsUpdate (breadcrumbs) {
       this.$set(this, 'breadcrumbs', breadcrumbs)
@@ -188,11 +221,11 @@ export default {
 </script>
 
 <style scoped>
-  .filter-wrapper {
+  .field-wrapper {
     display: flex;
     position: relative;
   }
-  .filter-parent {
+  .field-name {
     display: inline-flex;
     width: 100%;
     margin: 2px;
@@ -205,7 +238,7 @@ export default {
     transition: all 500ms;
     overflow: visible;
   }
-  .filter-parent.inactive {
+  .field-name.inactive {
     border-color: #600;
     color: #600;
     background: #fff8f8;
@@ -214,15 +247,22 @@ export default {
   .filter-options {
     display: none;
     position: absolute;
-    width: 90%;
+    width: 100%;
     top: 2px;
     left: 90%;
     border: 1px solid #999;
     background: #ffc;
     z-index: 9;
   }
-  .filter-wrapper:hover .filter-options {
+  .field-wrapper:hover .filter-options {
     display: block;
+  }
+  .filter-options > div {
+    cursor: pointer;
+  }
+  .filter-options > div:hover {
+    color: #00f;
+    background: rgba(0, 0, 0, 0.1);
   }
 
   .outer {

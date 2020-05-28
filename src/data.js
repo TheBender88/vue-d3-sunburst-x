@@ -20,9 +20,14 @@ const generateFilterOptions = ({ columns, rows }) => {
       f[k].add(v)
     })
   })
+
   const options = {}
-  Object.keys(f).forEach(k => {
-    options[k] = Array.from(f[k]).sort()
+  Object.keys(f).forEach(field => {
+    const o = {}
+    Array.from(f[field]).sort().forEach(value => {
+      o[value] = 1
+    })
+    options[field] = o
   })
   return options
 }
@@ -30,5 +35,5 @@ const generateFilterOptions = ({ columns, rows }) => {
 export {
   dataCsv,
   loadCsvFromUrl,
-  generateFilterOptions
+  generateFilterOptions,
 }

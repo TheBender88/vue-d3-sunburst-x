@@ -37,10 +37,11 @@ export default {
     generateRandomData () {
       const columns = [ 'Letter', 'Animal', 'Fruit', 'Country', 'Total' ]
       const groupNames = [
-        [ 'Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon' ],
+        // [ 'Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon' ],
+        [ 'Alpha' ],
         [ 'Antelope', 'Baboon', 'Camel', 'Deer', 'Elephant' ],
         [ 'Apple', 'Banana', 'Coconut', 'Date', 'Elderberry'],
-        [ 'Australia', 'Belgium', 'Canada', 'Denmark  ', 'Egypt' ]
+        [ 'Australia', 'Belgium', 'Canada', 'Denmark', 'Egypt' ]
       ]
       let rows = []
       const f = (a, b) => [].concat(...a.map(a => b.map(b => [].concat(a, b))))
