@@ -5,6 +5,10 @@
         <li v-for="(v, k) in breadcrumbs" :key="k"><a>{{ v }}</a></li>
       </ul>
     </div>
+    <div>
+      <pre>{{ filterOptions }}</pre>
+      <input type="checkbox"/>ABC
+    </div>
     <div class="inner">
       <div class="help" @click="toggleHelp ^= 1">
         <div>
@@ -35,16 +39,28 @@
       <div class="field-list">
         <div>GROUP ORDER</div>
         <div is="transition-group">
-          <div
-            v-for="(f, i) in fields"
-            :key="f.name"
-            @click="groupOrderToggle(i)"
-            :class="f.selected ? '' : 'inactive'"
-            draggable="true"
-            @dragstart="dragStart(i, $event)"
-            @dragover="dragOver(i, $event)"
-            @drop="dragDrop(i, $event)"
-          >{{ f.name }}</div>
+          <template v-for="(f, i) in fields">
+            <div class="filter-wrapper" :key="`0/${f.name}`">
+              <div
+                :key="`1/${f.name}`"
+                @click="groupOrderToggle(i)"
+                :class="'filter-parent' + (f.selected ? '' : ' inactive')"
+                draggable="true"
+                @dragstart="dragStart(i, $event)"
+                @dragover="dragOver(i, $event)"
+                @drop="dragDrop(i, $event)"
+              >
+                {{ f.name }}
+              </div>
+              <div :key="`2/${f.name}`" class="filter-options">
+                <template v-for="(opt, i) in filterOptions[f.name]">
+                  <div :key="i">
+                    <input type="checkbox" :key="i">{{ opt }}
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -78,6 +94,7 @@ export default {
       toggleHelp: 0,
       fields: [], // { name: 'Delta', selected: 1 },
       breadcrumbs: [],
+      filterOptions: {},
     }
   },
   computed: {
@@ -119,6 +136,11 @@ export default {
         return
       }
       this.toggleNoData = 0
+      const f = d.generateFilterOptions({
+        columns: this.columns,
+        rows: this.rows,
+      })
+      this.$set(this, 'filterOptions', f)
       v.initData({
         rootName: this.rootName,
         fields: this.selectedFields,
@@ -166,6 +188,43 @@ export default {
 </script>
 
 <style scoped>
+  .filter-wrapper {
+    display: flex;
+    position: relative;
+  }
+  .filter-parent {
+    display: inline-flex;
+    width: 100%;
+    margin: 2px;
+    border: 1px solid #060;
+    padding: 4px 12px;
+    cursor: pointer;
+    text-align: center;
+    background: #f8fff8;
+    color: #060;
+    transition: all 500ms;
+    overflow: visible;
+  }
+  .filter-parent.inactive {
+    border-color: #600;
+    color: #600;
+    background: #fff8f8;
+    opacity: 0.5;
+  }
+  .filter-options {
+    display: none;
+    position: absolute;
+    width: 90%;
+    top: 2px;
+    left: 90%;
+    border: 1px solid #999;
+    background: #ffc;
+    z-index: 9;
+  }
+  .filter-wrapper:hover .filter-options {
+    display: block;
+  }
+
   .outer {
     display: inline-grid;
     /*font-family: Arial,sans-serif;*/
@@ -334,22 +393,6 @@ export default {
     margin: 2px;
     padding: 4px 12px;
     font-weight: bold;
-  }
-  .field-list > div:nth-child(2) > div {
-    margin: 2px;
-    border: 1px solid #060;
-    padding: 4px 12px;
-    cursor: pointer;
-    text-align: center;
-    background: #f8fff8;
-    color: #060;
-    transition: all 500ms;
-  }
-  .field-list > div:nth-child(2) > div.inactive {
-    border-color: #600;
-    color: #600;
-    background: #fff8f8;
-    opacity: 0.5;
   }
 
   .d3svg {

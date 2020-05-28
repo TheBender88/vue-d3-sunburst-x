@@ -11,7 +11,24 @@ const loadCsvFromUrl = (url) => {
     })
 }
 
+const generateFilterOptions = ({ columns, rows }) => {
+  const f = {}
+  rows.forEach(row => {
+    Object.entries(row).forEach(([k, v]) => {
+      if (k === 'Total') return
+      if (f[k] === undefined) f[k] = new Set()
+      f[k].add(v)
+    })
+  })
+  const options = {}
+  Object.keys(f).forEach(k => {
+    options[k] = Array.from(f[k]).sort()
+  })
+  return options
+}
+
 export {
   dataCsv,
   loadCsvFromUrl,
+  generateFilterOptions
 }
