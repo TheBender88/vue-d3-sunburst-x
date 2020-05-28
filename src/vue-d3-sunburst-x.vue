@@ -103,8 +103,8 @@ export default {
     },
   },
   mounted () {
-    // this.initFields()
-    // this.dataChanged()
+    this.initFields()
+    this.dataChanged()
   },
   methods: {
     initFields () {
@@ -131,11 +131,11 @@ export default {
     },
     dragStart (i, e) {
       e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('text/plain', i)
+      e.dataTransfer.setData('text/plain', i.toString())
     },
     dragDrop (to, e) {
       e.preventDefault()
-      let from = e.dataTransfer.getData('text/plain')
+      let from = parseInt(e.dataTransfer.getData('text/plain'))
       this.groupOrderMove(from, to)
     },
     dragOver (i, e) {
