@@ -1,6 +1,6 @@
 {
   "name": "vue-d3-sunburst-x",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Sunburst Visualization of hierarchical data",
   "main": "index.js",
   "scripts": {

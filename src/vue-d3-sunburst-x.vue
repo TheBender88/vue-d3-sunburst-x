@@ -81,23 +81,30 @@ export default {
     }
   },
   computed: {
+    updateTrigger () {
+      return {
+        columns: this.columns,
+        rows: this.rows,
+      }
+    },
     selectedFields () {
       return this.fields.filter(e => e.selected === 1).map(e => e.name)
     },
   },
   watch: {
-    'columns': function () {
-      this.initFields()
-      this.dataChanged()
-    },
-    'rows': {
+    'updateTrigger': {
       deep: true,
-      handler: function () { this.dataChanged() },
+      handler: function (newVal, oldVal) {
+        if (oldVal.columns !== newVal.columns) {
+          this.initFields()
+        }
+        this.dataChanged()
+      }
     },
   },
   mounted () {
-    this.initFields()
-    this.dataChanged()
+    // this.initFields()
+    // this.dataChanged()
   },
   methods: {
     initFields () {
@@ -107,7 +114,6 @@ export default {
       this.$set(this, 'fields', f)
     },
     dataChanged () {
-      console.log('dataChanged')
       if (this.selectedFields.length === 0 || this.rows.length === 0) {
         this.toggleNoData = 1
         return
